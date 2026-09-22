@@ -49,7 +49,6 @@ function renderMeds() {
     const search = document.getElementById('searchInput').value.toLowerCase();
     grid.innerHTML = '';
 
-    // Sort: Favorites first, then Alphabetical
     const sortedMeds = [...medicines].sort((a, b) => {
         if (a.favorite === b.favorite) {
             return a.name.localeCompare(b.name);
@@ -71,11 +70,15 @@ function renderMeds() {
         `;
         
         btn.onclick = (e) => {
-            // Prevent triggering if clicking the star
-            if(e.target.className === 'med-fav-icon' || e.target.className === 'med-fav-icon active') {
-                return;
+            // Ignore if clicking star
+            if(e.target.className.includes('med-fav-icon')) return;
+            
+            // TOGGLE LOGIC: If same med clicked again, clear selection
+            if (selectedMed && selectedMed.id === med.id) {
+                clearSelection();
+            } else {
+                selectMed(med);
             }
-            selectMed(med);
         };
         grid.appendChild(btn);
     });
@@ -116,24 +119,12 @@ function renderCart() {
 }
 
 function selectMed(med) {
-    // If clicking the same medicine again, clear selection (Toggle behavior)
-    if (selectedMed && selectedMed.id === med.id) {
-        clearSelection();
-        return;
-    }
-
     selectedMed = med;
     selectedQty = 0;
     document.getElementById('qtyControls').style.display = 'flex';
     document.getElementById('qtyInput').value = 0;
     updateSelectedInfo();
     renderMeds();
-    
-    // Scroll into view if needed on mobile
-    const middlePanel = document.querySelector('.middle-panel');
-    if(window.innerWidth <= 768) {
-        middlePanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
 }
 
 function updateSelectedInfo() {
@@ -159,16 +150,8 @@ function manualQtyChange(val) {
     updateSelectedInfo();
 }
 
-function focusQtyInput() {
-    if (!selectedMed) {
-        alert('Please select a medicine first!');
-        return;
-    }
-    document.getElementById('qtyControls').style.display = 'flex';
-    document.getElementById('qtyInput').focus();
-}
-
-function setQty(qty) {
+// NEW FUNCTION: Handles number click -> sets value AND focuses input
+function handleNumClick(qty) {
     if (!selectedMed) {
         alert('Please select a medicine first!');
         return;
@@ -176,6 +159,14 @@ function setQty(qty) {
     selectedQty = qty;
     document.getElementById('qtyInput').value = qty;
     updateSelectedInfo();
+    
+    // Automatically focus the input to allow typing
+    const input = document.getElementById('qtyInput');
+    input.focus();
+    
+    // On mobile, this triggers the keyboard. 
+    // We also select the text so typing replaces the number immediately
+    input.select(); 
 }
 
 function addToCart() {
@@ -191,8 +182,11 @@ function addToCart() {
         cart.push({ id: selectedMed.id, name: selectedMed.name, price: selectedMed.price, qty: selectedQty });
     }
 
-    // Auto clear after adding
-    clearSelection();
+    selectedMed = null;
+    selectedQty = 0;
+    document.getElementById('selectedInfo').innerHTML = '<div class="placeholder-text">Select a medicine</div>';
+    document.getElementById('qtyControls').style.display = 'none';
+    renderMeds();
     renderCart();
 }
 
@@ -313,28 +307,38 @@ function openTransactionMonitor() {
 }
 
 function closeModal() {
-    document.getElementById('reportModal').style.display = 'none';
+    const modal = document.getElementById('reportModal');
+    modal.style.display = 'none';
+    // Clear body to ensure clean state next time
+    setTimeout(() => {
+        document.getElementById('modalBody').innerHTML = '';
+    }, 200);
 }
 
 function printContent() {
     const printContents = document.getElementById('modalBody').innerHTML;
     const title = document.getElementById('modalTitle').innerText;
     const win = window.open('', '', 'height=600,width=800');
-    win.document.write('<html><head><title>' + title + '</title>');
-    win.document.write('<style>body{font-family:Arial;} table{width:100%;border-collapse:collapse;} th,td{border:1px solid #ddd;padding:8px;} th{background:#f4f4f4;}</style>');
-    win.document.write('</head><body>');
-    win.document.write('<h2>' + title + '</h2>');
-    win.document.write(printContents);
-    win.document.write('</body></html>');
-    win.document.close();
-    win.print();
+    if(win) {
+        win.document.write('<html><head><title>' + title + '</title>');
+        win.document.write('<style>body{font-family:Arial;} table{width:100%;border-collapse:collapse;} th,td{border:1px solid #ddd;padding:8px;} th{background:#f4f4f4;}</style>');
+        win.document.write('</head><body>');
+        win.document.write('<h2>' + title + '</h2>');
+        win.document.write(printContents);
+        win.document.write('</body></html>');
+        win.document.close();
+        win.print();
+    } else {
+        alert("Please allow popups to print.");
+    }
 }
 
 function saveAsPDF() {
+    // Trigger print dialog, user selects "Save as PDF"
     printContent(); 
-    alert("Tip: Sa print dialog, piliin ang 'Save as PDF' sa destination.");
 }
 
+// Close modal if clicked outside content
 window.onclick = function(event) {
     const modal = document.getElementById('reportModal');
     if (event.target == modal) {

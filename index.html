@@ -32,7 +32,8 @@
             margin: 0;
             padding: 0;
             height: 100vh;
-            overflow: hidden; /* Prevent body scroll */
+            overflow: hidden;
+            touch-action: manipulation; /* Prevents double-tap zoom */
         }
 
         .orientation-warning {
@@ -67,7 +68,6 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            min-height: 0; /* Fix for flex child overflow */
         }
 
         .search-bar {
@@ -77,7 +77,7 @@
             border: 1px solid var(--border);
             border-radius: 6px;
             margin-bottom: 15px;
-            flex-shrink: 0;
+            box-sizing: border-box;
         }
 
         .meds-grid {
@@ -123,15 +123,14 @@
         .med-name { font-weight: 600; font-size: 13px; margin-top: 20px; line-height: 1.2; }
         .med-price { color: #4b5563; font-size: 12px; margin-top: 4px; }
 
-        /* Middle Panel - FIXED FOR MOBILE */
+        /* Middle Panel - FIXED FOR MOBILE SCROLL */
         .middle-panel {
             background: var(--card);
             border-radius: 8px;
             padding: 15px;
             display: flex;
             flex-direction: column;
-            overflow: hidden; /* Important */
-            min-height: 0; /* Allow shrinking */
+            height: 100%; /* Ensure full height */
         }
 
         .selected-info {
@@ -140,12 +139,12 @@
             border-radius: 8px;
             text-align: center;
             margin-bottom: 15px;
-            flex-shrink: 0; /* Don't shrink this */
             min-height: 100px;
             display: flex;
             flex-direction: column;
             justify-content: center;
             border: 1px solid var(--border);
+            flex-shrink: 0; /* Don't shrink */
         }
 
         .qty-controls {
@@ -169,7 +168,6 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            flex-shrink: 0;
         }
         .qty-btn:active { transform: scale(0.9); }
         
@@ -181,15 +179,15 @@
             font-weight: bold;
             border: 1px solid var(--border);
             border-radius: 6px;
-            flex-shrink: 0;
         }
 
-        /* Scrollable area for numpad */
+        /* Scrollable Numpad Area */
         .numpad-wrapper {
             flex-grow: 1;
             overflow-y: auto;
             margin-bottom: 10px;
-            min-height: 0;
+            display: flex;
+            flex-direction: column;
         }
 
         .numpad-grid {
@@ -207,19 +205,17 @@
             cursor: pointer;
             transition: 0.1s;
             padding: 10px 0;
-            aspect-ratio: 1; /* Keep square */
         }
         .num-btn:active { background: #d1d5db; transform: scale(0.95); }
-        .num-btn.highlight { background: #eff6ff; border-color: var(--primary); color: var(--primary); }
 
+        /* Fixed Action Buttons at Bottom */
         .action-btns { 
             display: flex; 
             flex-direction: column; 
             gap: 10px; 
-            flex-shrink: 0; /* Always visible at bottom */
-            margin-top: auto; /* Push to bottom if space allows, but mostly relies on flow */
+            flex-shrink: 0; /* Never shrink */
+            margin-top: auto; /* Push to bottom if space allows */
         }
-        
         .btn-add { background: var(--primary); color: white; padding: 12px; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; }
         .btn-add:active { background: var(--primary-hover); transform: scale(0.98); }
         .btn-clear { background: #fee2e2; color: var(--danger); padding: 10px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
@@ -232,14 +228,13 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            min-height: 0;
         }
 
-        .cart-header { font-size: 16px; font-weight: bold; margin-bottom: 10px; border-bottom: 2px solid var(--border); padding-bottom: 8px; flex-shrink: 0;}
-        .cart-items { flex-grow: 1; overflow-y: auto; margin-bottom: 15px; min-height: 0; }
+        .cart-header { font-size: 16px; font-weight: bold; margin-bottom: 10px; border-bottom: 2px solid var(--border); padding-bottom: 8px;}
+        .cart-items { flex-grow: 1; overflow-y: auto; margin-bottom: 15px; }
         .cart-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed var(--border); font-size: 14px; }
         
-        .cart-footer { border-top: 2px solid var(--text); padding-top: 10px; flex-shrink: 0; }
+        .cart-footer { border-top: 2px solid var(--text); padding-top: 10px; }
         .total-row { display: flex; justify-content: space-between; font-size: 18px; font-weight: bold; margin-bottom: 15px; }
 
         .btn-checkout { background: var(--success); color: white; padding: 12px; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; margin-bottom: 10px;}
@@ -258,26 +253,26 @@
             width: 100%; height: 100%;
             background-color: rgba(0,0,0,0.5);
             overflow: auto;
+            backdrop-filter: blur(2px);
         }
         .modal-content {
             background-color: #fff;
             margin: 5% auto;
             padding: 20px;
             border-radius: 8px;
-            width: 90%;
+            width: 80%;
             max-width: 900px;
             max-height: 80vh;
             overflow-y: auto;
             position: relative;
         }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
-        .close-modal { color: #aaa; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .close-modal { color: #aaa; font-size: 28px; font-weight: bold; cursor: pointer; line-height: 1; }
         .close-modal:hover { color: #000; }
-        .modal-actions { margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
+        .modal-actions { margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end; }
         .btn-action { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
         .btn-print { background: var(--primary); color: white; }
         .btn-save { background: var(--success); color: white; }
-        .btn-back { background: #6b7280; color: white; }
 
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 14px; }
@@ -285,7 +280,6 @@
         .text-right { text-align: right; }
         .text-center { text-align: center; }
 
-        /* Mobile Responsive Fixes */
         @media (max-width: 1024px) and (orientation: landscape) {
             .container { grid-template-columns: 1fr 280px 300px; }
             .meds-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
@@ -293,28 +287,10 @@
 
         @media (max-width: 768px) and (orientation: portrait) {
             body { overflow: auto; height: auto; }
-            .container { 
-                grid-template-columns: 1fr; 
-                grid-template-rows: auto auto auto; 
-                height: auto; 
-                padding: 5px;
-            }
-            
-            .left-panel { min-height: 300px; margin-bottom: 10px; }
+            .container { grid-template-columns: 1fr; grid-template-rows: auto auto auto; height: auto; }
+            .left-panel, .middle-panel, .right-panel { min-height: 250px; margin-bottom: 10px; }
             .meds-grid { grid-template-columns: repeat(2, 1fr); max-height: 300px; }
-            
-            /* Critical Fix for Middle Panel on Mobile */
-            .middle-panel { 
-                min-height: auto; 
-                margin-bottom: 10px; 
-                max-height: 500px; /* Limit height so buttons don't go off screen */
-            }
-            
-            .numpad-wrapper {
-                max-height: 250px; /* Limit numpad height */
-            }
-            
-            .right-panel { min-height: 300px; margin-bottom: 10px; }
+            .numpad-grid { grid-template-columns: repeat(4, 1fr); }
             .cart-items { max-height: 200px; }
         }
     </style>
@@ -346,18 +322,18 @@
             <button class="qty-btn" onclick="adjustQty(1)">+</button>
         </div>
 
+        <!-- Wrapper for scrollable numpad -->
         <div class="numpad-wrapper">
             <div class="numpad-grid">
-                <button class="num-btn" onclick="setQty(5)">5</button>
-                <button class="num-btn" onclick="setQty(10)">10</button>
-                <button class="num-btn" onclick="setQty(15)">15</button>
-                <button class="num-btn" onclick="setQty(20)">20</button>
-                <button class="num-btn" onclick="setQty(30)">30</button>
-                <button class="num-btn" onclick="setQty(60)">60</button>
-                <button class="num-btn" onclick="setQty(90)">90</button>
-                <button class="num-btn" onclick="setQty(120)">120</button>
-                <button class="num-btn" onclick="setQty(180)">180</button>
-                <button class="num-btn highlight" onclick="focusQtyInput()">Type</button>
+                <button class="num-btn" onclick="handleNumClick(5)">5</button>
+                <button class="num-btn" onclick="handleNumClick(10)">10</button>
+                <button class="num-btn" onclick="handleNumClick(15)">15</button>
+                <button class="num-btn" onclick="handleNumClick(20)">20</button>
+                <button class="num-btn" onclick="handleNumClick(30)">30</button>
+                <button class="num-btn" onclick="handleNumClick(60)">60</button>
+                <button class="num-btn" onclick="handleNumClick(90)">90</button>
+                <button class="num-btn" onclick="handleNumClick(120)">120</button>
+                <button class="num-btn" onclick="handleNumClick(180)">180</button>
             </div>
         </div>
         
@@ -397,7 +373,6 @@
         </div>
         <div id="modalBody"></div>
         <div class="modal-actions">
-            <button class="btn-action btn-back" onclick="closeModal()">Back / Close</button>
             <button class="btn-action btn-save" onclick="saveAsPDF()">Save as PDF</button>
             <button class="btn-action btn-print" onclick="printContent()">Print Report</button>
         </div>
