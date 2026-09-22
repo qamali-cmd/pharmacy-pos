@@ -1,7 +1,7 @@
 {
-  "name": "Pharmacy POS System",
-  "short_name": "PharmacyPOS",
-  "description": "Pharmacy Point of Sale System",
+  "name": "Pharmacy Yakap POS",
+  "short_name": "YakapPOS",
+  "description": "Pharmacy Point of Sale System with Inventory & Reports",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#f3f4f6",
