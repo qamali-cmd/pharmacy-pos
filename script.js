@@ -1,13 +1,13 @@
-// Data Initialization
+// script.js
 let medicines = JSON.parse(localStorage.getItem('medicines')) || [
-    { id: 1, name: 'Amoxicillin 500mg', price: 12.00, fav: false },
-    { id: 2, name: 'Biogesic 500mg', price: 5.50, fav: false },
-    { id: 3, name: 'Cetirizine 10mg', price: 11.00, fav: false },
-    { id: 4, name: 'Kremil-S', price: 6.00, fav: false },
-    { id: 5, name: 'Loperamide 2mg', price: 9.00, fav: false },
-    { id: 6, name: 'Neozep Forte', price: 8.50, fav: false },
-    { id: 7, name: 'Strepsils', price: 15.00, fav: false },
-    { id: 8, name: 'Vitamin C 500mg', price: 10.00, fav: false }
+    { id: 1, name: 'Biogesic 500mg', price: 5.50, favorite: false },
+    { id: 2, name: 'Amoxicillin 500mg', price: 12.00, favorite: false },
+    { id: 3, name: 'Neozep Forte', price: 8.50, favorite: false },
+    { id: 4, name: 'Strepsils', price: 15.00, favorite: false },
+    { id: 5, name: 'Kremil-S', price: 6.00, favorite: false },
+    { id: 6, name: 'Vitamin C 500mg', price: 10.00, favorite: false },
+    { id: 7, name: 'Loperamide 2mg', price: 9.00, favorite: false },
+    { id: 8, name: 'Cetirizine 10mg', price: 11.00, favorite: false }
 ];
 
 let cart = [];
@@ -15,12 +15,10 @@ let selectedMed = null;
 let selectedQty = 0;
 let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
 
-// Save initial data if empty
+// Save initial meds if empty
 if (!localStorage.getItem('medicines')) {
     localStorage.setItem('medicines', JSON.stringify(medicines));
 }
-
-// --- Core Functions ---
 
 function checkOrientation() {
     const warning = document.getElementById('orientationWarning');
@@ -33,24 +31,18 @@ function checkOrientation() {
     }
 }
 
-function toggleFavorite(id, event) {
-    event.stopPropagation(); // Prevent selecting the med when clicking fav
+window.addEventListener('load', checkOrientation);
+window.addEventListener('resize', checkOrientation);
+window.addEventListener('orientationchange', checkOrientation);
+
+function toggleFavorite(e, id) {
+    e.stopPropagation();
     const med = medicines.find(m => m.id === id);
     if (med) {
-        med.fav = !med.fav;
+        med.favorite = !med.favorite;
         localStorage.setItem('medicines', JSON.stringify(medicines));
         renderMeds();
     }
-}
-
-function getSortedMeds() {
-    // Sort: Favorites first, then Alphabetical
-    return [...medicines].sort((a, b) => {
-        if (a.fav === b.fav) {
-            return a.name.localeCompare(b.name);
-        }
-        return b.fav ? -1 : 1;
-    });
 }
 
 function renderMeds() {
@@ -58,21 +50,31 @@ function renderMeds() {
     const search = document.getElementById('searchInput').value.toLowerCase();
     grid.innerHTML = '';
 
-    const sortedMeds = getSortedMeds();
+    // Sort: Favorites first, then Alphabetical
+    const sortedMeds = [...medicines].sort((a, b) => {
+        if (a.favorite === b.favorite) {
+            return a.name.localeCompare(b.name);
+        }
+        return a.favorite ? -1 : 1;
+    });
 
     sortedMeds.filter(m => m.name.toLowerCase().includes(search)).forEach(med => {
         const btn = document.createElement('div');
         btn.className = 'med-btn' + (selectedMed && selectedMed.id === med.id ? ' active' : '');
         
-        const favIcon = med.fav ? '★' : '☆';
-        const favClass = med.fav ? 'active' : '';
+        const favIcon = med.favorite ? '★' : '☆';
+        const favClass = med.favorite ? 'med-fav-icon active' : 'med-fav-icon';
 
         btn.innerHTML = `
-            <div class="med-fav-icon ${favClass}" onclick="toggleFavorite(${med.id}, event)">${favIcon}</div>
+            <div class="${favClass}" onclick="toggleFavorite(event, ${med.id})">${favIcon}</div>
             <div class="med-name">${med.name}</div>
             <div class="med-price">₱${med.price.toFixed(2)}</div>
         `;
-        btn.onclick = () => selectMed(med);
+        btn.onclick = (e) => {
+            if(e.target.className !== 'med-fav-icon' && e.target.className !== 'med-fav-icon active') {
+                selectMed(med);
+            }
+        };
         grid.appendChild(btn);
     });
 }
@@ -97,11 +99,11 @@ function renderCart() {
         div.className = 'cart-item';
         div.innerHTML = `
             <div>
-                <div class="cart-item-name" style="font-weight:bold;">${item.name}</div>
-                <div class="cart-item-qty" style="color:#666; font-size:12px;">${item.qty} x ₱${item.price.toFixed(2)}</div>
+                <div class="cart-item-name">${item.name}</div>
+                <div class="cart-item-qty">Qty: ${item.qty} x ₱${item.price.toFixed(2)}</div>
             </div>
             <div style="display:flex; align-items:center; gap:10px;">
-                <div class="cart-item-total" style="font-weight:bold;">₱${itemTotal.toFixed(2)}</div>
+                <div class="cart-item-total">₱${itemTotal.toFixed(2)}</div>
                 <span style="color:red; cursor:pointer; font-weight:bold;" onclick="removeFromCart(${index})">✕</span>
             </div>
         `;
@@ -114,28 +116,18 @@ function renderCart() {
 function selectMed(med) {
     selectedMed = med;
     selectedQty = 0;
-    updateSelectedUI();
+    document.getElementById('qtyControls').style.display = 'flex';
+    document.getElementById('qtyInput').value = 0;
+    updateSelectedInfo();
     renderMeds();
 }
 
-function updateSelectedUI() {
-    const infoDiv = document.getElementById('selectedInfo');
-    const controlsDiv = document.getElementById('qtyControls');
-    const qtyInput = document.getElementById('qtyInput');
-
-    if (!selectedMed) {
-        infoDiv.innerHTML = '<div class="placeholder-text">Select a medicine</div>';
-        controlsDiv.style.display = 'none';
-        return;
-    }
-
-    infoDiv.innerHTML = `
+function updateSelectedInfo() {
+    if(!selectedMed) return;
+    document.getElementById('selectedInfo').innerHTML = `
         <div style="font-weight:bold; font-size:16px;">${selectedMed.name}</div>
         <div style="color:#4b5563; margin-top:5px;">Price: ₱${selectedMed.price.toFixed(2)}</div>
     `;
-    
-    controlsDiv.style.display = 'flex';
-    qtyInput.value = selectedQty;
 }
 
 function adjustQty(change) {
@@ -143,13 +135,14 @@ function adjustQty(change) {
     selectedQty += change;
     if (selectedQty < 0) selectedQty = 0;
     document.getElementById('qtyInput').value = selectedQty;
+    updateSelectedInfo();
 }
 
 function manualQtyChange(val) {
     if (!selectedMed) return;
-    let num = parseInt(val);
-    if (isNaN(num) || num < 0) num = 0;
-    selectedQty = num;
+    selectedQty = parseInt(val) || 0;
+    if (selectedQty < 0) selectedQty = 0;
+    updateSelectedInfo();
 }
 
 function focusQtyInput() {
@@ -157,8 +150,8 @@ function focusQtyInput() {
         alert('Please select a medicine first!');
         return;
     }
+    document.getElementById('qtyControls').style.display = 'flex';
     document.getElementById('qtyInput').focus();
-    document.getElementById('qtyInput').select();
 }
 
 function setQty(qty) {
@@ -167,7 +160,8 @@ function setQty(qty) {
         return;
     }
     selectedQty = qty;
-    document.getElementById('qtyInput').value = selectedQty;
+    document.getElementById('qtyInput').value = qty;
+    updateSelectedInfo();
 }
 
 function addToCart() {
@@ -180,17 +174,13 @@ function addToCart() {
     if (existing) {
         existing.qty += selectedQty;
     } else {
-        cart.push({ 
-            id: selectedMed.id, 
-            name: selectedMed.name, 
-            price: selectedMed.price, 
-            qty: selectedQty 
-        });
+        cart.push({ id: selectedMed.id, name: selectedMed.name, price: selectedMed.price, qty: selectedQty });
     }
 
     selectedMed = null;
     selectedQty = 0;
-    updateSelectedUI();
+    document.getElementById('selectedInfo').innerHTML = '<div class="placeholder-text">Select a medicine</div>';
+    document.getElementById('qtyControls').style.display = 'none';
     renderMeds();
     renderCart();
 }
@@ -203,18 +193,14 @@ function removeFromCart(index) {
 function clearSelection() {
     selectedMed = null;
     selectedQty = 0;
-    updateSelectedUI();
+    document.getElementById('selectedInfo').innerHTML = '<div class="placeholder-text">Select a medicine</div>';
+    document.getElementById('qtyControls').style.display = 'none';
     renderMeds();
 }
 
 function checkout() {
-    if (cart.length === 0) {
-        alert('Cart is empty!');
-        return;
-    }
+    if (cart.length === 0) return;
     
-    if(!confirm(`Confirm transaction total of ₱${cart.reduce((sum, i) => sum + (i.price * i.qty), 0).toFixed(2)}?`)) return;
-
     const now = new Date();
     const transaction = {
         id: Date.now(),
@@ -231,13 +217,8 @@ function checkout() {
     alert('Transaction Saved Successfully!');
 }
 
-// --- Report & Monitoring Logic ---
-
+// Modal Functions
 function openReportModal(type) {
-    const modal = document.getElementById('reportModal');
-    const titleEl = document.getElementById('modalTitle');
-    const bodyEl = document.getElementById('modalBody');
-    
     const now = new Date();
     let filtered = [];
     let title = '';
@@ -254,9 +235,6 @@ function openReportModal(type) {
         filtered = transactions.filter(t => new Date(t.date) >= weekAgo);
     }
 
-    titleEl.innerText = title;
-    
-    // Aggregate items
     let reportItems = {};
     filtered.forEach(t => {
         t.items.forEach(item => {
@@ -268,89 +246,60 @@ function openReportModal(type) {
         });
     });
 
-    // Sort Alphabetically
-    const sortedKeys = Object.keys(reportItems).sort();
-
     let grandTotal = 0;
     let tableRows = '';
+    // Sort alphabetically
+    const sortedKeys = Object.keys(reportItems).sort();
     
-    if (sortedKeys.length === 0) {
-        tableRows = '<tr><td colspan="4" class="text-center">No transactions recorded for this period.</td></tr>';
-    } else {
-        sortedKeys.forEach(name => {
-            const r = reportItems[name];
-            grandTotal += r.total;
-            tableRows += `
-                <tr>
-                    <td>${name}</td>
-                    <td class="text-center">${r.qty}</td>
-                    <td class="text-right">₱${r.price.toFixed(2)}</td>
-                    <td class="text-right">₱${r.total.toFixed(2)}</td>
-                </tr>
-            `;
-        });
-    }
+    sortedKeys.forEach(name => {
+        const r = reportItems[name];
+        grandTotal += r.total;
+        tableRows += `<tr>
+            <td>${name}</td>
+            <td class="text-center">${r.qty}</td>
+            <td class="text-right">₱${r.price.toFixed(2)}</td>
+            <td class="text-right">₱${r.total.toFixed(2)}</td>
+        </tr>`;
+    });
 
-    bodyEl.innerHTML = `
-        <p style="color:#666; margin-bottom:15px;">Generated on: ${now.toLocaleString()}</p>
+    const modal = document.getElementById('reportModal');
+    document.getElementById('modalTitle').innerText = title;
+    document.getElementById('modalBody').innerHTML = `
+        <p>Generated on: ${now.toLocaleString()}</p>
         <table>
-            <thead>
-                <tr>
-                    <th>Medicine Name</th>
-                    <th class="text-center">Qty</th>
-                    <th class="text-right">Price</th>
-                    <th class="text-right">Total</th>
-                </tr>
-            </thead>
-            <tbody>${tableRows}</tbody>
-            <tfoot>
-                <tr style="background:#f3f4f6; font-weight:bold;">
-                    <td colspan="3" class="text-right">GRAND TOTAL:</td>
-                    <td class="text-right">₱${grandTotal.toFixed(2)}</td>
-                </tr>
-            </tfoot>
+            <thead><tr><th>Medicine Name</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead>
+            <tbody>${tableRows || '<tr><td colspan="4" class="text-center">No transactions recorded.</td></tr>'}</tbody>
         </table>
+        <div style="margin-top:20px; font-weight:bold; font-size:18px; text-align:right;">Grand Total: ₱${grandTotal.toFixed(2)}</div>
     `;
-
     modal.style.display = 'block';
 }
 
 function openTransactionMonitor() {
     const modal = document.getElementById('reportModal');
-    const titleEl = document.getElementById('modalTitle');
-    const bodyEl = document.getElementById('modalBody');
+    document.getElementById('modalTitle').innerText = 'TRANSACTION HISTORY (Chronological)';
+    
+    // Sort by date descending (newest first) or ascending? Request says chronological (usually oldest to newest for history, but newest first for monitoring). Let's do Newest First.
+    const sortedTrans = [...transactions].sort((a, b) => b.id - a.id);
 
-    titleEl.innerText = 'TRANSACTION MONITORING (Chronological)';
+    let html = '<table><thead><tr><th>ID / Time</th><th>Items</th><th>Total</th></tr></thead><tbody>';
+    
+    sortedTrans.forEach(t => {
+        const dateObj = new Date(t.date);
+        const timeStr = dateObj.toLocaleString();
+        const itemsStr = t.items.map(i => `${i.qty}x ${i.name}`).join(', ');
+        
+        html += `<tr>
+            <td style="font-size:12px;">#${t.id}<br>${timeStr}</td>
+            <td>${itemsStr}</td>
+            <td class="text-right">₱${t.total.toFixed(2)}</td>
+        </tr>`;
+    });
 
-    // Sort transactions by date (newest first or oldest first? Request said chronological, usually oldest to newest for history, but latest on top for monitoring. Let's do Newest First for monitoring)
-    const sortedTrans = [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
+    html += '</tbody></table>';
+    if(transactions.length === 0) html = '<p class="placeholder-text">No transactions yet.</p>';
 
-    let content = '';
-    if (sortedTrans.length === 0) {
-        content = '<p class="placeholder-text">No transactions recorded yet.</p>';
-    } else {
-        sortedTrans.forEach((t, index) => {
-            const dateObj = new Date(t.date);
-            let itemsList = '<ul style="padding-left:20px; margin:5px 0; font-size:13px;">';
-            t.items.forEach(item => {
-                itemsList += `<li>${item.name} (x${item.qty}) - ₱${(item.price * item.qty).toFixed(2)}</li>`;
-            });
-            itemsList += '</ul>';
-
-            content += `
-                <div style="border:1px solid #eee; padding:15px; margin-bottom:15px; border-radius:6px; background:#fafafa;">
-                    <div style="display:flex; justify-content:space-between; border-bottom:1px solid #ddd; padding-bottom:5px; margin-bottom:5px;">
-                        <strong>Trans #${t.id.toString().slice(-6)}</strong>
-                        <span>${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString()}</span>
-                    </div>
-                    <div>${itemsList}</div>
-                    <div style="text-align:right; font-weight:bold; margin-top:5px;">Total: ₱${t.total.toFixed(2)}</div>
-                </div>
-            `;
-        });
-    }
-
-    bodyEl.innerHTML = content;
+    document.getElementById('modalBody').innerHTML = html;
     modal.style.display = 'block';
 }
 
@@ -361,48 +310,30 @@ function closeModal() {
 function printContent() {
     const printContents = document.getElementById('modalBody').innerHTML;
     const title = document.getElementById('modalTitle').innerText;
-    const originalContents = document.body.innerHTML;
-
-    const printWindow = window.open('', '', 'height=600,width=800');
-    printWindow.document.write(`
-        <html><head><title>${title}</title>
-        <style>
-            body { font-family: Arial, sans-serif; padding: 20px; }
-            h2 { text-align: center; }
-            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            th, td { border: 1px solid #ddd; padding: 8px; }
-            th { background: #f3f4f6; }
-            .text-right { text-align: right; }
-            .text-center { text-align: center; }
-        </style></head><body>
-        <h2>${title}</h2>
-        ${printContents}
-        <script>window.onload = function() { window.print(); }<\/script>
-        </body></html>
-    `);
-    printWindow.document.close();
+    const win = window.open('', '', 'height=600,width=800');
+    win.document.write('<html><head><title>' + title + '</title>');
+    win.document.write('<style>body{font-family:Arial;} table{width:100%;border-collapse:collapse;} th,td{border:1px solid #ddd;padding:8px;} th{background:#f4f4f4;}</style>');
+    win.document.write('</head><body>');
+    win.document.write('<h2>' + title + '</h2>');
+    win.document.write(printContents);
+    win.document.write('</body></html>');
+    win.document.close();
+    win.print();
 }
 
 function saveAsPDF() {
-    // Simple trick: Open print dialog and instruct user to "Save as PDF"
-    // Browsers handle PDF saving via the Print dialog nowadays.
-    printContent();
-    alert("Tip: In the Print dialog, change the Destination to 'Save as PDF' to download the file.");
+    // Browser native print to PDF is the most reliable client-side method without libraries
+    printContent(); 
+    alert("Tip: Sa print dialog, piliin ang 'Save as PDF' sa destination.");
 }
 
 // Close modal if clicked outside
 window.onclick = function(event) {
     const modal = document.getElementById('reportModal');
     if (event.target == modal) {
-        closeModal();
+        modal.style.display = "none";
     }
 }
 
-// Initialize
-window.addEventListener('load', () => {
-    checkOrientation();
-    renderMeds();
-    renderCart();
-});
-window.addEventListener('resize', checkOrientation);
-window.addEventListener('orientationchange', checkOrientation);
+renderMeds();
+renderCart();
