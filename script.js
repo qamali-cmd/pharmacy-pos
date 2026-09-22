@@ -15,7 +15,6 @@ let selectedMed = null;
 let selectedQty = 0;
 let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
 
-// Save initial meds if empty
 if (!localStorage.getItem('medicines')) {
     localStorage.setItem('medicines', JSON.stringify(medicines));
 }
@@ -70,10 +69,13 @@ function renderMeds() {
             <div class="med-name">${med.name}</div>
             <div class="med-price">₱${med.price.toFixed(2)}</div>
         `;
+        
         btn.onclick = (e) => {
-            if(e.target.className !== 'med-fav-icon' && e.target.className !== 'med-fav-icon active') {
-                selectMed(med);
+            // Prevent triggering if clicking the star
+            if(e.target.className === 'med-fav-icon' || e.target.className === 'med-fav-icon active') {
+                return;
             }
+            selectMed(med);
         };
         grid.appendChild(btn);
     });
@@ -114,12 +116,24 @@ function renderCart() {
 }
 
 function selectMed(med) {
+    // If clicking the same medicine again, clear selection (Toggle behavior)
+    if (selectedMed && selectedMed.id === med.id) {
+        clearSelection();
+        return;
+    }
+
     selectedMed = med;
     selectedQty = 0;
     document.getElementById('qtyControls').style.display = 'flex';
     document.getElementById('qtyInput').value = 0;
     updateSelectedInfo();
     renderMeds();
+    
+    // Scroll into view if needed on mobile
+    const middlePanel = document.querySelector('.middle-panel');
+    if(window.innerWidth <= 768) {
+        middlePanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
 }
 
 function updateSelectedInfo() {
@@ -177,11 +191,8 @@ function addToCart() {
         cart.push({ id: selectedMed.id, name: selectedMed.name, price: selectedMed.price, qty: selectedQty });
     }
 
-    selectedMed = null;
-    selectedQty = 0;
-    document.getElementById('selectedInfo').innerHTML = '<div class="placeholder-text">Select a medicine</div>';
-    document.getElementById('qtyControls').style.display = 'none';
-    renderMeds();
+    // Auto clear after adding
+    clearSelection();
     renderCart();
 }
 
@@ -248,7 +259,6 @@ function openReportModal(type) {
 
     let grandTotal = 0;
     let tableRows = '';
-    // Sort alphabetically
     const sortedKeys = Object.keys(reportItems).sort();
     
     sortedKeys.forEach(name => {
@@ -279,7 +289,6 @@ function openTransactionMonitor() {
     const modal = document.getElementById('reportModal');
     document.getElementById('modalTitle').innerText = 'TRANSACTION HISTORY (Chronological)';
     
-    // Sort by date descending (newest first) or ascending? Request says chronological (usually oldest to newest for history, but newest first for monitoring). Let's do Newest First.
     const sortedTrans = [...transactions].sort((a, b) => b.id - a.id);
 
     let html = '<table><thead><tr><th>ID / Time</th><th>Items</th><th>Total</th></tr></thead><tbody>';
@@ -322,16 +331,14 @@ function printContent() {
 }
 
 function saveAsPDF() {
-    // Browser native print to PDF is the most reliable client-side method without libraries
     printContent(); 
     alert("Tip: Sa print dialog, piliin ang 'Save as PDF' sa destination.");
 }
 
-// Close modal if clicked outside
 window.onclick = function(event) {
     const modal = document.getElementById('reportModal');
     if (event.target == modal) {
-        modal.style.display = "none";
+        closeModal();
     }
 }
 
