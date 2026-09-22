@@ -21,6 +21,8 @@
             --card: #ffffff;
             --text: #1f2937;
             --border: #e5e7eb;
+            --highlight-green: #10b981; /* Green for selection */
+            --highlight-bg: #d1fae5;
         }
 
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
@@ -33,7 +35,7 @@
             padding: 0;
             height: 100vh;
             overflow: hidden;
-            touch-action: manipulation; /* Prevents double-tap zoom */
+            touch-action: manipulation;
         }
 
         .orientation-warning {
@@ -87,13 +89,14 @@
             overflow-y: auto;
             flex-grow: 1;
             align-content: start;
+            padding-right: 5px; /* Space for scrollbar */
         }
 
         .med-btn {
             background: #f9fafb;
-            border: 1px solid var(--border);
+            border: 2px solid var(--border); /* Thicker border for better visibility */
             border-radius: 8px;
-            padding: 12px 8px;
+            padding: 10px;
             cursor: pointer;
             text-align: center;
             transition: all 0.2s;
@@ -102,12 +105,21 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            height: 100px;
+            height: 110px; /* Fixed height */
+            overflow: hidden; /* Prevent text溢出 */
+            box-sizing: border-box; /* Crucial for border not cutting off */
         }
 
         .med-btn:active { transform: scale(0.95); }
         .med-btn:hover { background: #e0e7ff; border-color: var(--primary); }
-        .med-btn.active { background: #dbeafe; border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary); }
+        
+        /* FIXED GREEN HIGHLIGHT */
+        .med-btn.active { 
+            background: var(--highlight-bg); 
+            border-color: var(--highlight-green); 
+            box-shadow: 0 0 0 2px var(--highlight-green); 
+            z-index: 1; /* Ensure it sits on top */
+        }
         
         .med-fav-icon {
             position: absolute;
@@ -120,17 +132,42 @@
         }
         .med-fav-icon.active { color: var(--warning); }
 
-        .med-name { font-weight: 600; font-size: 13px; margin-top: 20px; line-height: 1.2; }
-        .med-price { color: #4b5563; font-size: 12px; margin-top: 4px; }
+        .med-name { 
+            font-weight: 600; 
+            font-size: 13px; 
+            line-height: 1.2; 
+            margin-top: 20px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            word-wrap: break-word;
+        }
+        .med-details { 
+            color: #6b7280; 
+            font-size: 11px; 
+            margin-top: 4px; 
+            flex-grow: 1;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .med-price { 
+            color: var(--text); 
+            font-weight: bold;
+            font-size: 13px; 
+            margin-top: 4px; 
+        }
 
-        /* Middle Panel - FIXED FOR MOBILE SCROLL */
+        /* Middle Panel */
         .middle-panel {
             background: var(--card);
             border-radius: 8px;
             padding: 15px;
             display: flex;
             flex-direction: column;
-            height: 100%; /* Ensure full height */
+            height: 100%;
         }
 
         .selected-info {
@@ -144,7 +181,7 @@
             flex-direction: column;
             justify-content: center;
             border: 1px solid var(--border);
-            flex-shrink: 0; /* Don't shrink */
+            flex-shrink: 0;
         }
 
         .qty-controls {
@@ -172,16 +209,21 @@
         .qty-btn:active { transform: scale(0.9); }
         
         .qty-input {
-            width: 60px;
+            width: 70px;
             height: 40px;
             text-align: center;
             font-size: 20px;
             font-weight: bold;
             border: 1px solid var(--border);
             border-radius: 6px;
+            -moz-appearance: textfield;
+        }
+        .qty-input::-webkit-outer-spin-button,
+        .qty-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
         }
 
-        /* Scrollable Numpad Area */
         .numpad-wrapper {
             flex-grow: 1;
             overflow-y: auto;
@@ -200,7 +242,7 @@
             background: #f3f4f6;
             border: 1px solid var(--border);
             border-radius: 6px;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: bold;
             cursor: pointer;
             transition: 0.1s;
@@ -208,13 +250,12 @@
         }
         .num-btn:active { background: #d1d5db; transform: scale(0.95); }
 
-        /* Fixed Action Buttons at Bottom */
         .action-btns { 
             display: flex; 
             flex-direction: column; 
             gap: 10px; 
-            flex-shrink: 0; /* Never shrink */
-            margin-top: auto; /* Push to bottom if space allows */
+            flex-shrink: 0; 
+            margin-top: auto; 
         }
         .btn-add { background: var(--primary); color: white; padding: 12px; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; }
         .btn-add:active { background: var(--primary-hover); transform: scale(0.98); }
@@ -260,19 +301,38 @@
             margin: 5% auto;
             padding: 20px;
             border-radius: 8px;
-            width: 80%;
+            width: 90%;
             max-width: 900px;
-            max-height: 80vh;
+            max-height: 85vh;
             overflow-y: auto;
             position: relative;
+            display: flex;
+            flex-direction: column;
         }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; flex-shrink: 0; }
         .close-modal { color: #aaa; font-size: 28px; font-weight: bold; cursor: pointer; line-height: 1; }
         .close-modal:hover { color: #000; }
-        .modal-actions { margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end; }
+        
+        .modal-body-container {
+            flex-grow: 1;
+            overflow-y: auto;
+            margin-bottom: 15px;
+        }
+
+        .modal-actions { 
+            margin-top: 10px; 
+            display: flex; 
+            gap: 10px; 
+            justify-content: flex-end; 
+            flex-shrink: 0;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+        }
         .btn-action { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
         .btn-print { background: var(--primary); color: white; }
         .btn-save { background: var(--success); color: white; }
+        .btn-back { background: #9ca3af; color: white; }
+        .btn-delete-sm { background: #fee2e2; color: var(--danger); padding: 4px 8px; font-size: 12px; border-radius: 4px; border: none; cursor: pointer; }
 
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 14px; }
@@ -318,11 +378,10 @@
         
         <div class="qty-controls" id="qtyControls" style="display:none;">
             <button class="qty-btn" onclick="adjustQty(-1)">-</button>
-            <input type="number" class="qty-input" id="qtyInput" value="0" onchange="manualQtyChange(this.value)">
+            <input type="number" class="qty-input" id="qtyInput" value="0" inputmode="numeric" pattern="[0-9]*">
             <button class="qty-btn" onclick="adjustQty(1)">+</button>
         </div>
 
-        <!-- Wrapper for scrollable numpad -->
         <div class="numpad-wrapper">
             <div class="numpad-grid">
                 <button class="num-btn" onclick="handleNumClick(5)">5</button>
@@ -371,10 +430,13 @@
             <h2 id="modalTitle">Report Title</h2>
             <span class="close-modal" onclick="closeModal()">&times;</span>
         </div>
-        <div id="modalBody"></div>
-        <div class="modal-actions">
-            <button class="btn-action btn-save" onclick="saveAsPDF()">Save as PDF</button>
-            <button class="btn-action btn-print" onclick="printContent()">Print Report</button>
+        
+        <!-- Separate container for scrollable content -->
+        <div class="modal-body-container" id="modalBody"></div>
+        
+        <!-- Actions always visible at bottom -->
+        <div class="modal-actions" id="modalActions">
+            <!-- Buttons injected via JS -->
         </div>
     </div>
 </div>
